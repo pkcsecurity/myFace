@@ -1,0 +1,10 @@
+mode: DEV
+
+# immutant configurations
+server:
+  port: 4567
+  host: 127.0.0.1
+
+azure:
+  api: 66542e84b3f847e09e5f1f1d20649de2
+  url: https://westus.api.cognitive.microsoft.com/face/v1.0

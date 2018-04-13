@@ -1,0 +1,7 @@
+{:mode :dev
+ :dev {:host "127.0.0.1"
+       :port "8080"}
+ :prod {:host "0.0.0.0"
+        :port "80"}
+ :azure {:api "66542e84b3f847e09e5f1f1d20649de2"
+         :url "https://westus.api.cognitive.microsoft.com/face/v1.0"}}
