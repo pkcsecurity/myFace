@@ -1,9 +1,29 @@
 (ns myface.cljs.core
   (:require [reagent.core :as r]
             [goog.dom :as dom]
-            [myface.cljs.utils :as utils]))
+            [myface.cljs.utils :as utils]
+            [myface.cljs.xhr :as xhr]))
 
 (enable-console-print!)
+
+(defn post-image [{:keys [url file]}]
+  (let [endpoint "/detect-faces/abc123"]
+    (if url
+      (xhr/ajax "POST" endpoint
+        :body {:url url}
+        :on-success (fn [resp]
+                      (println resp)
+                      (js/console.log resp))
+        :on-error (fn [error]
+                    (js/console.log error)))
+      (xhr/ajax "POST" endpoint
+        :body file
+        :headers {"Content-Type" "application/octet-stream"}
+        :on-success (fn [resp]
+                      (println resp)
+                      (js/console.log resp))
+        :on-error (fn [error]
+                    (js/console.log error))))))
 
 (defn upload-body []
   (let [hover? (r/atom false)
@@ -16,7 +36,9 @@
          :on-change (fn [event]
                       (when-not (utils/blank? (-> event .-target .-value))
                         (js/console.log "Trying to upload!!!!")
-                        #_(upload/upload-js-files (.-files (.-target event)) on-change)))
+                        (let [files (utils/filelist->clj (.-files (.-target event)))]
+                          (doseq [file files]
+                            (post-image {:file file})))))
          :style {:display "none"}}]
        [:div.flex.justify-center.items-center.pointer
         {:on-mouse-over (utils/on hover?)
@@ -40,7 +62,9 @@
                    (.stopPropagation e)
                    (.preventDefault e)
                    (js/console.log "Trying to upload files")
-                   #_(upload/upload-js-files (.-files (.-dataTransfer e)) on-change))
+                   (let [files (js->clj (.-files (.-dataTransfer e)))]
+                     (doseq [file files]
+                       (post-image {:file file}))))
          :class (cond
                   (not= 0 @drag-count) :bg-pri-light
                   @hover? :bg-gray
@@ -99,7 +123,7 @@
            :on-change #(reset! data-atom (.. % -target -value))
            :placeholder "http://example-url/my-image.png"}]]
         [:div.col-6.pt2
-         [button :pri "Upload" #(js/console.log "HE CLICKED ME")]]]])))
+         [button :pri "Upload" #(post-image {:url @data-atom})]]]])))
 
 (defn body []
   [:div#body.bg-pri.flex.justify-center.center

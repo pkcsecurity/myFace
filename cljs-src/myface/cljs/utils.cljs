@@ -103,3 +103,9 @@
         mm (+ (.getMonth now) 1)
         yyyy (.getFullYear now)]
     (str mm "-" dd "-" yyyy)))
+
+(defn filelist->clj [js-col]
+  (-> (clj->js [])
+    (.-slice)
+    (.call js-col)
+    (js->clj)))
