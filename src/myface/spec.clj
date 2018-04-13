@@ -30,7 +30,7 @@
   (s/and
     (string-of-length 36)
     #(try
-       (utils/uuid %)
+       #_(utils/uuid %)
        (catch Exception _))))
 
 

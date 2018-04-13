@@ -3,6 +3,7 @@
   (:require [myface.routes :as r]
             [myface.properties :as props]
             [immutant.web :as server]))
+
 (defn -main [& args]
   (if (= :prod (props/property :mode))
     (server/run r/app :host (props/property :prod :host) :port (props/property :prod :port))

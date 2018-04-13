@@ -8,7 +8,8 @@
             [myface.index :as index]
             [compojure.core :as r]
             [compojure.route :as route]
-            [hiccup.core :as html]))
+            [hiccup.core :as html]
+            [myface.routes.azure-face]))
 
 (defn index-route [_]
   {:status 200
@@ -17,6 +18,9 @@
 
 (r/defroutes routes
   (r/GET "/" [] index-route)
+  (r/POST "/detect-faces" [] myface.routes.azure-face/detect-faces)
+  (r/POST "/detect-faces/:s-id" [s-id] myface.routes.azure-face/detect-faces)
+  (r/GET "/get-faces/:s-id" [s-id] myface.routes.azure-face/get-faces)
   (route/not-found nil))
 
 (def app
