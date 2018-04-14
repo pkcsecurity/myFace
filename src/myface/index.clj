@@ -3,7 +3,7 @@
             [hiccup.core :as html]
             [myface.properties :as p]))
 
-(def title "IMB Generosity: Give Cheerfully")
+(def title "My Face")
 
 (def app-js-path
   (if (= :dev (p/property :mode))
@@ -25,7 +25,6 @@
       (map css/css css/csses)
       [:style css/styles]]
      [:body
-      [:div#app
-       "<!-- https://www.youtube.com/watch?v=E-P2qL3qkzk -->"]
+      [:div#app]
       (for [s scripts]
         [:script {:src s}])]]))

@@ -5,8 +5,8 @@
   [:link {:rel :stylesheet :href href}])
 
 (def csses
-  ["/css/reset.min.css"
-   "/css/basscss.min.css"
+  ["https://cdnjs.cloudflare.com/ajax/libs/basscss/8.0.3/css/basscss.min.css"
+   "https://fonts.googleapis.com/css?family=Roboto:300,400,700"
    "/css/animate.css"
    "/css/fontawesome-all.min.css"])
 
@@ -32,8 +32,8 @@
    :small [12 18]})
 
 (def colors
-  {:pri "#2a2f37"
-   :sec "#00bbdd"
+  {:pri "#69bfd8"
+   :sec "#fcec59"
    :black "#000"
    :white "#fff"
    :gray-dark "#999"
@@ -44,7 +44,7 @@
    :success-dark "#0bd"
    :warning "#ffcc00"
    :warning-dark "#ffcc00"
-   :error "#ffcccc"
+   :error "#cc0000"
    :error-dark "#cc3300"})
 
 (def shadows
@@ -83,7 +83,7 @@
       :width "100%"
       :min-width "250px"
       :color "#999"
-      :font-family ["Helvetica" :sans-serif]
+      :font-family ["Roboto" :sans-serif]
       :font-size html-font-size}]
 
     [:.placeholder-pri
@@ -101,9 +101,9 @@
     [:h6 :.h6 {:font-weight 400}]
     [:h1 :h2 :h3 :h4 :h5 :h6
      :.h1 :.h2 :.h3 :.h4 :.h5 :.h6
-     {:font-family ["FreightSans Pro" :sans-serif]}]
-    [:p :.p {:font-family ["Helvetica" :sans-serif]}]
-    [:.open-sans {:font-family ["Open Sans" :sans-serif]}]
+     {:font-family ["Roboto" :sans-serif]}]
+    [:p :.p {:font-family ["Roboto" :sans-serif]}]
+    [:.open-sans {:font-family ["Roboto" :sans-serif]}]
     [:a {:text-decoration :none
          :color :inherit}]
     [:.link {:color "#0bd"}]
