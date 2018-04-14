@@ -3,10 +3,16 @@
             [myface.http :as http]
             [myface.properties :as p]
             [cheshire.core :refer :all]
-            [thumbnailz.core :as thumb])
-  (:import [java.io ByteArrayInputStream]
+            [thumbnailz.core :as thumb]
+            [image-resizer.core :refer :all]
+            [image-resizer.format :as format])
+  (:import [java.io ByteArrayInputStream ByteArrayOutputStream File FileOutputStream BufferedOutputStream]
            [java.awt.image BufferedImage]
-           [javax.imageio ImageIO]))
+           [javax.imageio ImageIO]
+           [java.util Base64]
+           [org.apache.commons.io IOUtils]
+           [javax.xml.bind DatatypeConverter]
+           [net.coobird.thumbnailator Thumbnails]))
 
 (def azure-face-key (p/property :azure :api))
 (def azure-face-url (p/property :azure :url))
@@ -23,12 +29,23 @@
 
 (defn detect-faces [{:keys [body query-string] {:strs [content-type]} :headers {:keys [s-id]} :route-params :as req}]
   (let [binary? (= content-type "application/octet-stream")
-        face-response (detect-faces-request binary? body)
+        b-arr (IOUtils/toByteArray body)
+        face-response (detect-faces-request binary? (ByteArrayInputStream. b-arr))
         k (keyword s-id)
         m (first (parse-string (:body @face-response) true))]
-    (when s-id (swap! face-db assoc k (if-not (k @face-db)
+    (if binary?
+      (let [ext (last (clojure.string/split query-string #"="))
+            baos (ByteArrayOutputStream.)
+            buf-img (resize-to-width (clojure.java.io/file (str "./image." ext)) 200)
+            write (ImageIO/write buf-img ext baos)
+            b64 (DatatypeConverter/printBase64Binary (.toByteArray baos))
+            m (assoc m :b64 b64 :ext ext)]
+        (when s-id (swap! face-db assoc k (if-not (k @face-db)
                                         [m]
                                         (conj (k @face-db) m))))
+        (when s-id (swap! face-db assoc k (if-not (k @face-db)
+                                        [m]
+                                        (conj (k @face-db) m))))))
     (http/ok (:body @face-response))))
 
 (defn get-faces [{{:keys [s-id]} :route-params}]
@@ -47,7 +64,9 @@
       (into [] [x1 x2])))
   clojure.lang.PersistentVector
   (analyze [x1 x2]
-    (conj x1 x2))
+    (if (map? (first x1))
+      (mapv (partial merge-with analyze) x1 x2)
+      (conj x1 x2)))
   java.lang.Double
   (analyze [x1 x2]
     (- x2 x1))
@@ -73,5 +92,12 @@
     (mapv (fn [[x1 x2]] (analyze-face-maps x1 x2)) partitioned-steps)))
 
 (defn face-steps [{{:keys [s-id]} :route-params}]
-  (println (face-diff-steps (keyword s-id)))
   (http/ok (face-diff-steps (keyword s-id))))
+
+(defn face-overall-changes [{{:keys [s-id]} :route-params}]
+  (let [photos ((keyword s-id) @face-db)]
+    (if (> (count photos) 1)
+      (http/ok (merge-with analyze
+                           (select-keys (first photos) [:faceAttributes])
+                           (select-keys (last photos) [:faceAttributes])))
+      (http/ok "Not enough data. Need at least 2 photos."))))
