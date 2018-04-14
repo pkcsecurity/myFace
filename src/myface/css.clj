@@ -44,7 +44,7 @@
    :success-dark "#0bd"
    :warning "#ffcc00"
    :warning-dark "#ffcc00"
-   :error "#ffcccc"
+   :error "#cc0000"
    :error-dark "#cc3300"})
 
 (def shadows

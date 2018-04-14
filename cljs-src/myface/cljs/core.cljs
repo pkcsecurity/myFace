@@ -1,142 +1,49 @@
 (ns myface.cljs.core
   (:require [reagent.core :as r]
             [goog.dom :as dom]
-            [myface.cljs.utils :as utils]
-            [myface.cljs.xhr :as xhr]))
+            [myface.cljs.model.global :as global]
+            [myface.cljs.view.upload-file :as upload-file]
+            [myface.cljs.view.upload-url :as upload-url]
+            [myface.cljs.view.analyze-one :as analyze-one]
+            [myface.cljs.components.button :as button]
+            [myface.cljs.model.global :as global]))
 
 (enable-console-print!)
 
-(defn post-image [{:keys [url file]}]
-  (let [endpoint "/detect-faces/abc123"]
-    (if url
-      (xhr/ajax "POST" endpoint
-        :body {:url url}
-        :on-success (fn [resp]
-                      (println resp)
-                      (js/console.log resp))
-        :on-error (fn [error]
-                    (js/console.log error)))
-      (xhr/ajax "POST" endpoint
-        :body file
-        :headers {"Content-Type" "application/octet-stream"}
-        :on-success (fn [resp]
-                      (println resp)
-                      (js/console.log resp))
-        :on-error (fn [error]
-                    (js/console.log error))))))
+(defn home []
+  [:div.col-8.mx-auto
+   [:h1.black.caps "My Face"]
+   [:h3.black.pt1.upper "Finding sadness in the biggest of smiles"]
+   [:div.py2
+    (if @global/error
+      [:h4.error @global/error])]
+   [:div.flex.justify-around.items-center
+    [:div.bg-white.border.border-gray
+     [upload-url/body]]
+    [:h3.black "- OR -"]
+    [:div.bg-white.border.border-gray
+     [upload-file/body]]]])
 
-(defn upload-body []
-  (let [hover? (r/atom false)
-        drag-count (r/atom 0)]
-    (fn []
-      [:label
-       [:input
-        {:type "file"
-         :multiple "multiple"
-         :on-change (fn [event]
-                      (when-not (utils/blank? (-> event .-target .-value))
-                        (js/console.log "Trying to upload!!!!")
-                        (let [files (utils/filelist->clj (.-files (.-target event)))]
-                          (doseq [file files]
-                            (post-image {:file file})))))
-         :style {:display "none"}}]
-       [:div.flex.justify-center.items-center.pointer
-        {:on-mouse-over (utils/on hover?)
-         :on-mouse-leave (utils/off hover?)
-         :on-drag-leave (fn [e]
-                          (reset! drag-count (dec @drag-count))
-                          (.stopPropagation e)
-                          (.preventDefault e))
-         :on-drag-exit (fn [e]
-                         (.stopPropagation e)
-                         (.preventDefault e))
-         :on-drag-over (fn [e]
-                         (.stopPropagation e)
-                         (.preventDefault e))
-         :on-drag-enter (fn [e]
-                          (reset! drag-count (inc @drag-count))
-                          (.stopPropagation e)
-                          (.preventDefault e))
-         :onDrop (fn [e]
-                   (reset! drag-count 0)
-                   (.stopPropagation e)
-                   (.preventDefault e)
-                   (js/console.log "Trying to upload files")
-                   (let [files (js->clj (.-files (.-dataTransfer e)))]
-                     (doseq [file files]
-                       (post-image {:file file}))))
-         :class (cond
-                  (not= 0 @drag-count) :bg-pri-light
-                  @hover? :bg-gray
-                  :else :bg-white)
-         :style {:height "250px"
-                 :width "250px"}}
-        [:div.flex.justify-center.items-center.flex-column
-         [:div.flex
-          {:style {:font-size "3rem"}}
-          [:i.fas.pri {:class :fa-cloud-upload-alt}]]
-         [:h6.upper.my1 (if (not= 0 @drag-count) "Drop anywhere to upload!" "Upload Image")]
-         [:p.light (when (= 0 @drag-count) "(Drag-n-Drop or Click to upload)")]]]])))
+(defn analyze-one []
+  [analyze-one/body])
 
-(defn button [color-class text on-click]
-  (let [hover? (r/atom false)
-        active? (r/atom false)
-        color (name color-class)]
-    (fn [color-class text on-click]
-      [:button.col-12.upper.relative.flex.justify-between.items-center.transition.white.outline-none
-       {:on-mouse-enter (utils/on hover?)
-        :on-mouse-leave (fn[_]
-                          (reset! hover? false)
-                          (reset! active? false))
-        :on-mouse-down (utils/on active?)
-        :on-mouse-up (utils/off active?)
-        :on-focus (utils/on hover?)
-        :on-blur (utils/off hover?)
-        :on-click (fn [e]
-                    (.stopPropagation e)
-                    (.preventDefault e)
-                    (on-click e))
-        :class (cond
-                 @active? (str "pointer border-none bg-" color "-light " color)
-                 @hover? (str "pointer border-none bg-" color "-dark s2")
-                 :else (str "pointer border-none bg-" color " s1"))
-        :style {:height "2rem" :line-height "2rem" :border-radius ".25rem"}}
-       [:div.flex-auto
-        [:h6.col-12 text]]])))
-
-(defn upload-uri []
-  (let [focus? (r/atom false)
-        data-atom (r/atom "")]
-    (fn []
-      [:div.pt2
-       {:style {:height "250px"
-                :width "250px"}}
-       [:h5.black "Upload with a URL"]
-       [:div.flex.justify-center.items-center.flex-column.pt2
-        [:div
-         [:input.col-12.p1.border.rounded
-          {:value @data-atom
-           :type :text
-           :on-focus (utils/on focus?)
-           :on-blur (utils/off focus?)
-           :class (str "border pr3 " (if @focus? "border-pri" "border-gray-dark"))
-           :on-change #(reset! data-atom (.. % -target -value))
-           :placeholder "http://example-url/my-image.png"}]]
-        [:div.col-6.pt2
-         [button :pri "Upload" #(post-image {:url @data-atom})]]]])))
+(defn analyze-multiple []
+  [:div])
 
 (defn body []
   [:div#body.bg-pri.flex.justify-center.center
-   [:div.col-8.my4.py4.bg-sec.border.border-black.rounded
+   [:div.col-8.my4.py2.bg-sec.border.border-black.rounded
     {:style {:border-width ".3rem"}}
-    [:h1.black "My Face"]
-    [:h3.black "We can find sadness in the biggest of smiles!"]
-    [:div.flex.justify-around.pt4.items-center
-     [:div.bg-white
-      [upload-uri]]
-     [:h3 "- OR -"]
-     [:div.bg-white
-      [upload-body]]]]])
+    [:div.col-12.pr2.
+     [:div.right.col-2
+      (if (= :home @global/state)
+        [button/button :pri "Statistics" #(reset! global/state :analyze-one)]
+        [button/button :pri "Upload" #(reset! global/state :home)])]]
+    [:div.pt3
+     (case @global/state
+       :home [home]
+       :analyze-one [analyze-one]
+       :analyze-multiple [analyze-multiple])]]])
 
 (defn -main []
   (r/render-component [body]
