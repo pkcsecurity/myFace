@@ -2,7 +2,11 @@
   (:require [org.httpkit.client :as c]
             [myface.http :as http]
             [myface.properties :as p]
-            [cheshire.core :refer :all]))
+            [cheshire.core :refer :all]
+            [thumbnailz.core :as thumb])
+  (:import [java.io ByteArrayInputStream]
+           [java.awt.image BufferedImage]
+           [javax.imageio ImageIO]))
 
 (def azure-face-key (p/property :azure :api))
 (def azure-face-url (p/property :azure :url))
@@ -17,7 +21,7 @@
                     body
                     (generate-string body))}))
 
-(defn detect-faces [{:keys [body] {:strs [content-type]} :headers {:keys [s-id]} :route-params :as req}]
+(defn detect-faces [{:keys [body query-string] {:strs [content-type]} :headers {:keys [s-id]} :route-params :as req}]
   (let [binary? (= content-type "application/octet-stream")
         face-response (detect-faces-request binary? body)
         k (keyword s-id)
@@ -29,3 +33,45 @@
 
 (defn get-faces [{{:keys [s-id]} :route-params}]
   (http/ok (into [] ((keyword s-id) @face-db))))
+
+(defn img->thumbnail [img])
+
+(defprotocol Analyzer
+  (analyze [x1 x2]))
+
+(extend-protocol Analyzer
+  String
+  (analyze [x1 x2]
+    (if (coll? x1)
+      (conj x1 x2)
+      (into [] [x1 x2])))
+  clojure.lang.PersistentVector
+  (analyze [x1 x2]
+    (conj x1 x2))
+  java.lang.Double
+  (analyze [x1 x2]
+    (- x2 x1))
+  clojure.lang.PersistentArrayMap
+  (analyze [x1 x2]
+    (merge-with analyze x1 x2))
+  clojure.lang.PersistentHashMap
+  (analyze [x1 x2]
+    (merge-with analyze x1 x2))
+  java.lang.Boolean
+  (analyze [x1 x2]
+    (if (coll? x1)
+      (conj x1 x2)
+      (into [] [x1 x2]))))
+
+(defn analyze-face-maps [fm1 fm2]
+  (merge-with analyze
+              (select-keys fm1 [:faceAttributes])
+              (select-keys fm2 [:faceAttributes])))
+
+(defn face-diff-steps [k]
+  (let [partitioned-steps (partition 2 1 (k @face-db))]
+    (mapv (fn [[x1 x2]] (analyze-face-maps x1 x2)) partitioned-steps)))
+
+(defn face-steps [{{:keys [s-id]} :route-params}]
+  (println (face-diff-steps (keyword s-id)))
+  (http/ok (face-diff-steps (keyword s-id))))

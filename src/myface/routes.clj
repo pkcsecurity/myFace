@@ -21,6 +21,7 @@
   (r/POST "/detect-faces" [] myface.routes.azure-face/detect-faces)
   (r/POST "/detect-faces/:s-id" [s-id] myface.routes.azure-face/detect-faces)
   (r/GET "/get-faces/:s-id" [s-id] myface.routes.azure-face/get-faces)
+  (r/GET "/get-diffs/:s-id" [s-id] myface.routes.azure-face/face-steps)
   (route/not-found nil))
 
 (def app

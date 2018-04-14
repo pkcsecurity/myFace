@@ -32,6 +32,7 @@
                  [ring/ring-codec "1.1.0"]
                  [camel-snake-kebab "0.4.0"]
                  [http-kit "2.2.0"]
+                 [org.clojars.civa86/thumbnailz "1.0.0"]
 
                  ;; cljx dependencies
                  [org.clojure/spec.alpha "0.1.143"]
